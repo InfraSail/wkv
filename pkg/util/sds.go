@@ -25,12 +25,12 @@ type sdshdr struct {
 
  }
 
- func set_func(key string, value string){
-	sdsnew(value)
+ func SetFunc(key string, value string){
+	sdsNew(value)
 
  }
 
- func get_func(key string){
+ func GetFunc(key string){
 
  }
 
@@ -43,14 +43,14 @@ type sdshdr struct {
 	return "OK" 
  }*/
 
- func user_ask(ask_str string){
+ func UserAsk(ask_str string){
 	ask_split := strings.Split(ask_str, " ")
 	if ask_split[0] == "set" && ask_split[0] == "SET"{
 		//存储键值对
-		set_func(ask_split[1],ask_split[2])
+		SetFunc(ask_split[1],ask_split[2])
 		
 	}else if ask_split[0] == "get" && ask_split[0] == "GET"{
-		get_func(ask_split[1])
+		GetFunc(ask_split[1])
 	}else{
 		fmt.Println("error")
 	}
@@ -61,50 +61,50 @@ type sdshdr struct {
 //}
 
 //创建一个包含给定go字符串的SDS
-func sdsnew(str string) string{
+func sdsNew(str string) string{
 	s := sdshdr{i,fr,bu}
 	s.buf = []byte(str)
 	for i, value:=range s.buf{
 	fmt.Printf("buf%d:'%c'",i,value)
 	}
-	sdslen(&s)
-	sdsavail(&s)
+	sdsLen(&s)
+	sdsAvail(&s)
 
 	return "OK"
 }
 
 //返回SDS已使用的字节数
-func sdslen(s *sdshdr) int{
+func sdsLen(s *sdshdr) int{
 	s.len = len(s.buf)
 	fmt.Printf("sdslen: %d\n", s.len)
 	return s.len
 }
 
 //返回SDS未使用的字节数
-func sdsavail(s *sdshdr) int{
-	s.free = fr - sdslen(s) + 1
+func sdsAvail(s *sdshdr) int{
+	s.free = fr - sdsLen(s) + 1
 	fmt.Printf("sdsavail: %d\n", s.free)
 	return s.free
 }
 
 //清空SDS保存的字符串内容
-func sdsclear(s *sdshdr) string{
+func sdsClear(s *sdshdr) string{
 	s.free = fr
 	s.len = i
 	s.buf = bu
 	return "OK"
 }
 
-func sdscmo(){}
+func sdsCmo(){}
 
 //增长字符串
 //
-func sdscat()  {
+func sdsCat()  {
 	
 }
 //缩减字符串
 //
-func sdstrim() {}
+func sdsTrim() {}
 
-func sdsrange() {}
+func sdsRange() {}
 
