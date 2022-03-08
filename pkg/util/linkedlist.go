@@ -1,4 +1,5 @@
 package pkg
+
 import (
 	"fmt"
 	"sync"
@@ -6,100 +7,99 @@ import (
 
 type Node struct {
 	Value float64
-	Next *Node
+	Next  *Node
 }
 
-func (n* Node) String()string{
+func (n *Node) String() string {
 	if n == nil {
 		return ""
 	}
 
 	ret := ""
 	current := n
-	for   {
-		if current  == nil{
+	for {
+		if current == nil {
 			ret += fmt.Sprint("nil")
 			return ret
 		}
 
-		ret += fmt.Sprintf("%v->",current.Value)
+		ret += fmt.Sprintf("%v->", current.Value)
 		current = current.Next
 	}
 }
 
-func NewNode(value float64)*Node{
+func NewNode(value float64) *Node {
 	return &Node{
-		Value:value,
+		Value: value,
 	}
 }
 
-func NewNodeWithNext(value float64,next * Node)*Node  {
+func NewNodeWithNext(value float64, next *Node) *Node {
 	return &Node{
-		Value:value,
-		Next:next,
+		Value: value,
+		Next:  next,
 	}
 }
-func Traverse(head * Node)*Node  {
-	var  pre ,current *Node = nil,head
-	for{
-		if current == nil{
+func Traverse(head *Node) *Node {
+	var pre, current *Node = nil, head
+	for {
+		if current == nil {
 			return pre
 		}
-		current.Next,pre,current =pre,current,current.Next
+		current.Next, pre, current = pre, current, current.Next
 	}
 }
 
-
-func Traverse2(head * Node)*Node{
+func Traverse2(head *Node) *Node {
 	if head == nil || head.Next == nil {
 		return head
 	}
 
 	pre := head.Next
-	cur := NewNodeWithNext(0,head)
-	for  {
-		if cur.Next == nil || cur.Next.Next == nil{
+	cur := NewNodeWithNext(0, head)
+	for {
+		if cur.Next == nil || cur.Next.Next == nil {
 			return pre
 		}
 
 		a := cur.Next
 		b := cur.Next.Next
-		cur.Next,a.Next,b.Next=b, b.Next,a
+		cur.Next, a.Next, b.Next = b, b.Next, a
 		cur = a
 	}
 }
 
 // 检测链表是否有环（快慢指针）
-func HasCircle(head * Node)bool{
-	if head == nil{
+func HasCircle(head *Node) bool {
+	if head == nil {
 		return false
 	}
 
-	slow,fast := head,head
-	for   {
+	slow, fast := head, head
+	for {
 		if fast.Next == nil || fast.Next.Next == nil || slow.Next == nil {
 			return false
 		}
 
 		fast = fast.Next.Next
 		slow = slow.Next
-		if slow == fast{
+		if slow == fast {
 			return true
 		}
 	}
 }
 
 // 获取链表的中间节点
-func GetMiddleNode(head * Node)* Node{
-	if head == nil || head.Next == nil{
+func GetMiddleNode(head *Node) *Node {
+	if head == nil || head.Next == nil {
 		return head
 	}
 
-	slow,fast := head,head
-	for   {
+	slow, fast := head, head
+	for {
 		if fast.Next != nil && fast.Next.Next != nil && slow.Next != nil {
 			slow = slow.Next
-			fast=fast.Next.Next
+			fast = fast.Next.Next
 			continue
 		}
 
@@ -108,11 +108,11 @@ func GetMiddleNode(head * Node)* Node{
 }
 
 // 删除倒数第n个结点，如果倒数n个结点为头结点则不可删除
-func RDelNode(head* Node,n int) * Node {
-	slow,fast := head,head
+func RDelNode(head *Node, n int) *Node {
+	slow, fast := head, head
 
 	// 1 2 3 4 5
-	for ; n > 0 ; n --   {
+	for ; n > 0; n-- {
 		if fast.Next == nil {
 			break
 		}
@@ -124,7 +124,7 @@ func RDelNode(head* Node,n int) * Node {
 		return nil
 	}
 
-	for  {
+	for {
 		if fast.Next != nil && slow.Next != nil {
 			fast = fast.Next
 			slow = slow.Next
@@ -133,7 +133,7 @@ func RDelNode(head* Node,n int) * Node {
 		break
 	}
 
-	if slow != nil && slow.Next != nil{
+	if slow != nil && slow.Next != nil {
 		ret := slow.Next
 		slow.Next = slow.Next.Next
 		return ret
@@ -141,24 +141,23 @@ func RDelNode(head* Node,n int) * Node {
 	return nil
 }
 
-
-func Merge(head1,head2 * Node)*Node{
-	if head1 == nil{
+func Merge(head1, head2 *Node) *Node {
+	if head1 == nil {
 		return head2
 	}
 
-	if head2 == nil{
+	if head2 == nil {
 		return head1
 	}
 
-	head,insert := head1,head2
+	head, insert := head1, head2
 	if head2.Value < head1.Value {
-		head,insert = head2,head1
+		head, insert = head2, head1
 	}
 
 	cur := head
 	for {
-		if insert == nil{
+		if insert == nil {
 			return head
 		}
 
@@ -168,13 +167,13 @@ func Merge(head1,head2 * Node)*Node{
 		}
 
 		for {
-			if  insert.Value > cur.Value && cur.Next != nil && insert.Value < cur.Next.Value  {
+			if insert.Value > cur.Value && cur.Next != nil && insert.Value < cur.Next.Value {
 				tmp := insert.Next
 				insert.Next = cur.Next
 				cur.Next = insert
 
 				cur = cur.Next
-				insert =tmp
+				insert = tmp
 				break
 			}
 
@@ -186,22 +185,21 @@ func Merge(head1,head2 * Node)*Node{
 	}
 }
 
-
 type LeastRecentlyUsed struct {
 	Capacity uint64 // 容量
-	Number uint64 // 当前链表数量
-	Head  * Node // 链表头节点
-	mu sync.RWMutex
+	Number   uint64 // 当前链表数量
+	Head     *Node  // 链表头节点
+	mu       sync.RWMutex
 }
 
-func NewLeastRecentlyUsed(capacity uint64)*LeastRecentlyUsed{
+func NewLeastRecentlyUsed(capacity uint64) *LeastRecentlyUsed {
 	return &LeastRecentlyUsed{
-		Capacity:capacity,
+		Capacity: capacity,
 	}
 }
 
 // 返回要查找的结点的前一个节点跟自己的节点，如果pre为空则要查找的结点就是头结点
-func (l * LeastRecentlyUsed)Find(value interface{})(pre,cur *Node,exist bool){
+func (l *LeastRecentlyUsed) Find(value interface{}) (pre, cur *Node, exist bool) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
@@ -215,7 +213,7 @@ func (l * LeastRecentlyUsed)Find(value interface{})(pre,cur *Node,exist bool){
 		return
 	}
 	pre = l.Head
-	for  {
+	for {
 		if pre.Next == nil {
 			return
 		}
@@ -230,13 +228,13 @@ func (l * LeastRecentlyUsed)Find(value interface{})(pre,cur *Node,exist bool){
 	}
 }
 
-func (l * LeastRecentlyUsed)Use(value float64)  {
-	pre,cur ,ok := l.Find(value)
+func (l *LeastRecentlyUsed) Use(value float64) {
+	pre, cur, ok := l.Find(value)
 	l.mu.Lock()
 
 	// 如果当前节点已经存在则将当前节点放在第一个节点
-	if ok && pre != nil{
-		pre.Next= cur.Next
+	if ok && pre != nil {
+		pre.Next = cur.Next
 		cur.Next = l.Head
 		l.Head = cur
 		l.mu.Unlock()
@@ -251,7 +249,7 @@ func (l * LeastRecentlyUsed)Use(value float64)  {
 			return
 		}
 		pre := l.Head
-		for  {
+		for {
 			if pre.Next.Next != nil {
 				pre = pre.Next
 				continue
@@ -262,9 +260,9 @@ func (l * LeastRecentlyUsed)Use(value float64)  {
 			return
 		}
 
-	}else{
-		l.Number ++
-		newNode := NewNodeWithNext(value,l.Head)
+	} else {
+		l.Number++
+		newNode := NewNodeWithNext(value, l.Head)
 		l.Head = newNode
 		l.mu.Unlock()
 		return
