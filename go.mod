@@ -1,3 +1,3 @@
-module module1
+module wkv
 
 go 1.17
