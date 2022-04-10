@@ -1,4 +1,4 @@
-package pkg
+package util
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func (n *Node) String() string {
 	current := n
 	for {
 		if current == nil {
-			ret += fmt.Sprint("nil")
+			ret += "nil"
 			return ret
 		}
 
@@ -40,6 +40,7 @@ func NewNodeWithNext(value float64, next *Node) *Node {
 		Next:  next,
 	}
 }
+
 func Traverse(head *Node) *Node {
 	var pre, current *Node = nil, head
 	for {
@@ -49,6 +50,7 @@ func Traverse(head *Node) *Node {
 		current.Next, pre, current = pre, current, current.Next
 	}
 }
+
 
 func Traverse2(head *Node) *Node {
 	if head == nil || head.Next == nil {
@@ -69,7 +71,9 @@ func Traverse2(head *Node) *Node {
 	}
 }
 
+
 // 检测链表是否有环（快慢指针）
+
 func HasCircle(head *Node) bool {
 	if head == nil {
 		return false
@@ -152,7 +156,11 @@ func Merge(head1, head2 *Node) *Node {
 
 	head, insert := head1, head2
 	if head2.Value < head1.Value {
+
+		
+		
 		head, insert = head2, head1
+
 	}
 
 	cur := head

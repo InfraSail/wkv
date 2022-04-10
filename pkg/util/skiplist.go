@@ -1,4 +1,4 @@
-package pkg
+package util
 
 import "math/rand"
 
@@ -89,7 +89,7 @@ func (sl *Skiplist) Insert(score float64, elem string) *SkipListNode {
 		sl.level = level
 	}
 	// 更新节点 level，并插入新节点
-	node.SetLevel(level)
+	// TODO: node.SetLevel(level)
 	for i := 0; i < level; i++ {
 		// 更新每层的节点指向
 		node.level[i].forward = update[i].level[i].forward
