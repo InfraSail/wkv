@@ -1,224 +1,227 @@
 package util
-/*
-import "math/rand"
 
-const (
-	MaxLevel = 64 // 足以容纳 2^64 个元素
-	P        = 0.25 
+import (
+	//"fmt"
+	"math/rand"
 )
 
-// 跳跃表节点的结构体
-type SkipListNode struct {
-	elem     string // 成员对象
-	score    float64 // 分值，节点按分值的从小到大排列
-	backward *SkipListNode // 后退指针
-	level    []skipLevel // 标记此节点的层级
+const (
+	maxLevel = 64 // 足以容纳 2^64 个元素
+	p        = 0.25 
+)
+
+// Element是一个跳表的元素
+type Element struct {
+    Score   float64
+    Value   interface{}
+    forward []*Element
 }
 
-// 跳跃表层级的结构体
-type skipLevel struct {
-	// forward 每层都要有指向下一个节点的指针
-	forward *SkipListNode
-	// span 间隔定义为：从当前节点到 forward 指向的下个节点之间间隔的节点数
-	span int
+// 新建元素
+func newElement(score float64, value interface{}, level int) *Element {
+    return &Element{
+        Score:   score,
+        Value:   value,
+        forward: make([]*Element, level),
+    }
 }
 
-// 跳跃表总体的结构体
-type Skiplist struct {
-	header, tail *SkipListNode // header指向第一个节点， tail指向末尾节点
-	level        int // 记录跳表的实际高度
-	length       int // 记录跳表的长度（不含头节点）
+// SkipList代表一个调表
+// 来自SkipList的零值是一个准备使用的空skiplist。
+type SkipList struct {
+    header *Element // 头节点是一个虚拟元素
+    len    int      // 目前的跳表长度，不包括头节点
+    level  int      // 目前的跳表高度，不包括头节点
 }
 
-// 比较节点的分值
-func (node *SkipListNode) skipListCompare(other *SkipListNode) int {
-	if node.score < other.score || (node.score == other.score && node.elem < other.elem) {
-		return -1
-	} else if node.score > other.score || (node.score == other.score && node.elem > other.elem) {
-		return 1
-	} else {
-		return 0
-	}
+// 目前的跳表长度，不包括头节点
+func (sl *SkipList) skipListLen() int {
+	return sl.len
 }
 
-func (node *SkipListNode) Lt(other *SkipListNode) bool {
-	return node.skipListCompare(other) < 0
+// 目前的跳表高度，不包括头节点
+func (sl *SkipList) skipListLevel() int {
+	return sl.level
 }
 
-func (node *SkipListNode) Lte(other *SkipListNode) bool {
-	return node.skipListCompare(other) <= 0
+// New返回一个新的调表指针
+func skipListNew() *SkipList {
+    return &SkipList{
+        header: &Element{forward: make([]*Element, maxLevel)},
+    }
 }
 
-func (node *SkipListNode) Gt(other *SkipListNode) bool {
-	return node.skipListCompare(other) > 0
+// 随机生跳表高度
+func skipListRandomLevel() int {
+    level := 1
+    for rand.Float32() < p && level < maxLevel {
+        level++
+    }
+    return level
 }
 
-func (node *SkipListNode) Eq(other *SkipListNode) bool {
-	return node.skipListCompare(other) == 0
+// 返回跳表的第一个值，可能是nil
+func (sl *SkipList) skipListFront() *Element {
+    return sl.header.forward[0]
 }
 
-// 插入节点
-func (sl *Skiplist) skipListInsert(score float64, elem string) *SkipListNode {
-	var (
-		// update 用于记录每层待更新的节点
-		update [MaxLevel]*SkipListNode
-		// rank 用来记录每层经过的节点记录（可以看成到头节点的距离）
-		rank [MaxLevel]int
-		// 构建一个新节点，用于下面的大小判断，其 level 在后面设置
-		node = &SkipListNode{score: score, elem: elem}
-	)
-	cur := sl.header
-	for i := sl.level - 1; i >= 0; i-- {
-		if cur == sl.header {
-			rank[i] = 0
-		} else {
-			rank[i] = rank[i+1]
+// 返回e节点的后一个值
+func (e *Element) skipListNext() *Element {
+    if e != nil {
+        return e.forward[0]
+    }
+    return nil
+}
+
+// 返回跳表在给定排位上的节点
+func (sl *SkipList) skipListGetElementByBank(bank int) *Element{
+	i := 0
+	for  e := sl.skipListFront();e != nil ; e = e.skipListNext() { 
+		i ++
+		if i == bank - 1{
+			return e.forward[0]
 		}
-
-		for cur.level[i].forward != nil && cur.level[i].forward.Lt(node) {
-			rank[i] += cur.level[i].span
-			// 同层继续往后查找
-			cur = cur.level[i].forward
-		}
-		update[i] = cur
 	}
-	// 调整跳表高度
-	level := sl.randomLevel()
-	if level > sl.level {
-		// 初始化每层
-		for i := level - 1; i >= sl.level; i-- {
-			rank[i] = 0
-			update[i] = sl.header
-			update[i].level[i].span = sl.length
-		}
-		sl.level = level
-	}
-	// 更新节点 level，并插入新节点
-	// TODO: node.SetLevel(level)
-	for i := 0; i < level; i++ {
-		// 更新每层的节点指向
-		node.level[i].forward = update[i].level[i].forward
-		update[i].level[i].forward = node
-		// 更新 span 信息
-		node.level[i].span = update[i].level[i].span - (rank[0] - rank[i])
-		update[i].level[i].span = (rank[0] - rank[i]) + 1
-	}
-	// 针对新增节点 level < sl.level 的情况，需要更新上面没有扫到的层 span
-	for i := level; i < sl.level; i++ {
-		update[i].level[i].span++
-	}
-
-	if update[0] != sl.header {
-		// update[0] 就是和新增节点相邻的前一个节点
-		node.backward = update[0]
-	}
-	// 如果新增节点是最后一个，则需要更新 tail 指针
-	if node.level[0].forward == nil {
-		sl.tail = node
-	} else {
-		// 中间节点，需要更新后一个节点的回退指针
-		node.level[0].forward.backward = node
-	}
-	sl.length++
-	return node
+	return nil
 }
 
-// 
-func (sl *Skiplist) randomLevel() int {
-	level := 1
-	for rand.Float64() < P && level < MaxLevel {
-		level++
-	}
-	return level
+// 给定一个float64类型分值范围，如果跳表中有至少一个节点分值在这个范围内
+//那么返回 1 否则返回 0
+func (sl *SkipList) skipListIsInRange(left float64, right float64) int{
+	x := sl.header
+    for i := sl.level - 1; i >= 0; i-- {
+        for x.forward[i] != nil && x.forward[i].Score < left {
+            x = x.forward[i]
+        }
+    }
+    x = x.forward[0]
+    if x != nil && x.Score >= left && x.Score <= right {
+        return 1
+    }
+    return 0
 }
 
-// Delete 用于删除跳表中指定的节点。
-func (sl *Skiplist) Delete(score float64, elem string) *SkipListNode {
-	// 第一步，找到需要删除节点
-	var (
-		update     [MaxLevel]*SkipListNode
-		targetNode = &SkipListNode{elem: elem, score: score}
-	)
-	cur := sl.header
-	for i := sl.level - 1; i >= 0; i-- {
-		for cur.level[i].forward != nil && cur.level[i].forward.Lt(targetNode) {
-			cur = cur.level[i].forward
-		}
-		update[i] = cur
-	}
+// 给定一个float64类型分值范围，返回跳表内第一个符合此范围的节点
+func (sl *SkipList) skipListFirstInRange(left float64, right float64) *Element{
+	x := sl.header
+    for i := sl.level - 1; i >= 0; i-- {
+        for x.forward[i] != nil && x.forward[i].Score < left {
+            x = x.forward[i]
+        }
+    }
+    x = x.forward[0]
+    if x != nil && x.Score >= left && x.Score <= right {
+        return x
+    }
+    return nil
+}
 
-	nodeToBeDeleted := update[0].level[0].forward
-	if nodeToBeDeleted == nil || !nodeToBeDeleted.Eq(targetNode) {
+//给定一个float64类型分值范围，返回跳表内最后一个符合此范围的节点
+func (sl *SkipList) skipListLastInRange(left float64, right float64) *Element{
+	x := sl.header
+    for i := sl.level - 1; i >= 0; i-- {
+        for x.forward[i] != nil && x.forward[i].Score < right {
+            x = x.forward[i]
+        }
+    }
+	if !(x != nil && x.Score >= left && x.Score <= right){
 		return nil
 	}
-	sl.deleteNode(update, nodeToBeDeleted)
-	return nodeToBeDeleted
+    for x != nil && x.Score >= left && x.Score < right {
+		x = x.forward[0]
+
+    }
+	return x
+	
 }
 
-// 删除节点
-func (sl *Skiplist) deleteNode(update [64]*SkipListNode, nodeToBeDeleted *SkipListNode) {
+// 搜索skiplist，找出具有给定分数的元素。
+// 如果给定的分数存在，返回（*Element, true），否则返回（nil, false）。
+func (sl *SkipList) skipListSearch(score float64, value interface{}) (element *Element, ok bool) {
+    x := sl.header
+    for i := sl.level - 1; i >= 0; i-- {
+        for x.forward[i] != nil && x.forward[i].Score < score {
+            x = x.forward[i]
+        }
+    }
+    x = x.forward[0]
+    if x != nil && x.Score == score && x.Value == value {
+        return x, true
+    }
+    return nil, false
+}
 
-	// 调整每层待更新节点，修改 forward 指向
-	for i := 0; i < sl.level; i++ {
-		if update[i].level[i].forward == nodeToBeDeleted {
-			update[i].level[i].forward = nodeToBeDeleted.level[i].forward
-			update[i].level[i].span += nodeToBeDeleted.level[i].span - 1
-		} else {
-			update[i].level[i].span--
+// 在skiplist中插入（分值，值）对，并返回元素的指针。
+func (sl *SkipList) skipListInsert(score float64, value interface{}) *Element {
+    update := make([]*Element, maxLevel)
+    x := sl.header
+    for i := sl.level - 1; i >= 0; i-- {
+        for x.forward[i] != nil && x.forward[i].Score < score {
+            x = x.forward[i]
+        }
+        update[i] = x
+    }
+    x = x.forward[0]
+
+    // 已经出现的分值，用新值替换，然后返回
+    if x != nil && x.Score == score {
+        x.Value = value
+        return x
+    }
+
+    level := skipListRandomLevel()
+    if level > sl.level {
+        level = sl.level + 1
+        update[sl.level] = sl.header
+        sl.level = level
+    }
+    e := newElement(score, value, level)
+    for i := 0; i < level; i++ {
+        e.forward[i] = update[i].forward[i]
+        update[i].forward[i] = e
+    }
+    sl.len++
+    return e
+}
+
+// 删除给定值的节点，并返回给定值，如果节点不存在，返回nil
+func (sl *SkipList) skipListDelete(score float64) *Element {
+    update := make([]*Element, maxLevel)
+    x := sl.header
+    for i := sl.level - 1; i >= 0; i-- {
+        for x.forward[i] != nil && x.forward[i].Score < score {
+            x = x.forward[i]
+        }
+        update[i] = x
+    }
+    x = x.forward[0]
+
+    if x != nil && x.Score == score {
+        for i := 0; i < sl.level; i++ {
+            if update[i].forward[i].Score != x.Score {
+                return nil
+            }
+            update[i].forward[i] = x.forward[i]
+        }
+        sl.len--
+    }
+    return x
+}
+
+// 给定一个分值范围，删除跳跃表中所有在这个范围内的节点
+/*func (sl *SkipList) skipListDeleteRangeByScore(left float64, right float64) int{
+	num := 0
+	//const s *Element = sl.skipListFirstInRange(left,right) 
+	
+	for {
+		s := sl.skipListFirstInRange(left,right)
+		if s.Score == float64(0){
+		break
+		}else{
+		s = sl.skipListDelete(s.Score)
+		num ++
 		}
 	}
-	// 调整回退指针：
-	// 1. 如果被删除的节点是最后一个节点，需要更新 sl.tail
-	// 2. 如果被删除的节点位于中间，则直接更新后一个节点 backward 即可
-	if sl.tail == nodeToBeDeleted {
-		sl.tail = nodeToBeDeleted.backward
-	} else {
-		nodeToBeDeleted.level[0].forward.backward = nodeToBeDeleted.backward
-	}
-	// 调整层数
-	for sl.header.level[sl.level-1].forward == nil {
-		sl.level--
-	}
-	// 减少节点计数
-	sl.length--
-	nodeToBeDeleted.backward = nil
-	nodeToBeDeleted.level[0].forward = nil
-}
+	return num
 
-// 更新节点
-func (sl *Skiplist) UpdateScore(curScore float64, elem string, newScore float64) *SkipListNode {
-	var (
-		update     [MaxLevel]*SkipListNode
-		targetNode = &SkipListNode{elem: elem, score: curScore}
-	)
-	cur := sl.header
-	// 第一步，找到符合条件的目标节点
-	for i := sl.level - 1; i >= 0; i-- {
-		for cur.level[i].forward != nil && cur.level[i].forward.Lt(targetNode) {
-			cur = cur.level[i].forward
-		}
-		update[i] = cur
-	}
-	node := cur.level[0].forward
-	if node == nil || !node.Eq(targetNode) {
-		return nil
-	}
-	if sl.canUpdateScoreFor(node, newScore) {
-		node.score = newScore
-		return node
-	} else {
-		// 需要删除旧节点，增加新节点
-		sl.deleteNode(update, node)
-		return sl.Insert(newScore, node.elem)
-	}
-}
-
-func (sl *Skiplist) canUpdateScoreFor(node *SkipListNode, newScore float64) bool {
-	if (node.backward == nil || node.backward.score < newScore) &&
-		(node.level[0].forward == nil || node.level[0].forward.score > newScore) {
-		return true
-	}
-
-	return false
-}
-*/
+}*/
