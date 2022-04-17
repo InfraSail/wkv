@@ -3,30 +3,29 @@ package util
 import (
 	"bytes"
 	"encoding/binary"
-	
 	"errors"
 	"fmt"
 	"math"
 	"time"
-
 	"github.com/dchest/siphash"
 )
 
+// 初始化哈希表的容量
 const (
 	_initialHashtableSize uint64 = 4
 )
 
 type Dict struct {
 	hashTables []*hashTable
-	rehashIdx  int64
-	iterators  uint64
+	rehashIdx  int64 // 是否进行重哈希的标记量
+	iterators  uint64 
 }
 
 type hashTable struct {
 	buckets  []*entry
 	size     uint64
-	sizemask uint64
-	used     uint64
+	sizemask uint64 
+	used     uint64 
 }
 
 type entry struct {
@@ -35,7 +34,7 @@ type entry struct {
 }
 
 // New 实例化一个字典。
-func New() *Dict {
+func NewDict() *Dict {
 	return &Dict{
 		// 初始化的时候，准备两张哈希表，默认使用哈希表 1
 		// 在进行扩容时，会将哈希表 1 中的所有元素迁移到
