@@ -157,7 +157,7 @@ func (d *Dict) Cap() uint64 {
 	return d.hashTables[0].size
 }
 
-//TODO :
+// TODO :
 // Range 以非安全的方式进行迭代，意味着在迭代期间不允许对字典执行额外的
 // 操作，以免引起 rehash，导致重复扫描一些键。
 // 用户传入的 `fn` 回调，可以通过返回 false 指示迭代器停止工作。
@@ -167,7 +167,7 @@ func (d *Dict) Cap() uint64 {
 	d.rangeDict(fn, false)
 }*/
 
-//TODO :
+// TODO :
 // Range 以安全的方式进行迭代，可以在迭代期间执行 Load, Store 等操作，
 // 它会在执行这些操作时，阻止字典进行 rehash 操作。但不保证新加入的键值
 // 一定能够被扫描到。
