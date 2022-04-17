@@ -1,19 +1,21 @@
 package util
-
+/*
 import "math/rand"
 
 const (
 	MaxLevel = 64 // 足以容纳 2^64 个元素
-	P        = 0.25
+	P        = 0.25 
 )
 
+// 跳跃表节点的结构体
 type SkipListNode struct {
-	elem     string
-	score    float64
-	backward *SkipListNode
-	level    []skipLevel
+	elem     string // 成员对象
+	score    float64 // 分值，节点按分值的从小到大排列
+	backward *SkipListNode // 后退指针
+	level    []skipLevel // 标记此节点的层级
 }
 
+// 跳跃表层级的结构体
 type skipLevel struct {
 	// forward 每层都要有指向下一个节点的指针
 	forward *SkipListNode
@@ -21,13 +23,15 @@ type skipLevel struct {
 	span int
 }
 
+// 跳跃表总体的结构体
 type Skiplist struct {
-	header, tail *SkipListNode
+	header, tail *SkipListNode // header指向第一个节点， tail指向末尾节点
 	level        int // 记录跳表的实际高度
 	length       int // 记录跳表的长度（不含头节点）
 }
 
-func (node *SkipListNode) Compare(other *SkipListNode) int {
+// 比较节点的分值
+func (node *SkipListNode) skipListCompare(other *SkipListNode) int {
 	if node.score < other.score || (node.score == other.score && node.elem < other.elem) {
 		return -1
 	} else if node.score > other.score || (node.score == other.score && node.elem > other.elem) {
@@ -38,22 +42,23 @@ func (node *SkipListNode) Compare(other *SkipListNode) int {
 }
 
 func (node *SkipListNode) Lt(other *SkipListNode) bool {
-	return node.Compare(other) < 0
+	return node.skipListCompare(other) < 0
 }
 
 func (node *SkipListNode) Lte(other *SkipListNode) bool {
-	return node.Compare(other) <= 0
+	return node.skipListCompare(other) <= 0
 }
 
 func (node *SkipListNode) Gt(other *SkipListNode) bool {
-	return node.Compare(other) > 0
+	return node.skipListCompare(other) > 0
 }
 
 func (node *SkipListNode) Eq(other *SkipListNode) bool {
-	return node.Compare(other) == 0
+	return node.skipListCompare(other) == 0
 }
 
-func (sl *Skiplist) Insert(score float64, elem string) *SkipListNode {
+// 插入节点
+func (sl *Skiplist) skipListInsert(score float64, elem string) *SkipListNode {
 	var (
 		// update 用于记录每层待更新的节点
 		update [MaxLevel]*SkipListNode
@@ -118,6 +123,7 @@ func (sl *Skiplist) Insert(score float64, elem string) *SkipListNode {
 	return node
 }
 
+// 
 func (sl *Skiplist) randomLevel() int {
 	level := 1
 	for rand.Float64() < P && level < MaxLevel {
@@ -149,6 +155,7 @@ func (sl *Skiplist) Delete(score float64, elem string) *SkipListNode {
 	return nodeToBeDeleted
 }
 
+// 删除节点
 func (sl *Skiplist) deleteNode(update [64]*SkipListNode, nodeToBeDeleted *SkipListNode) {
 
 	// 调整每层待更新节点，修改 forward 指向
@@ -178,6 +185,7 @@ func (sl *Skiplist) deleteNode(update [64]*SkipListNode, nodeToBeDeleted *SkipLi
 	nodeToBeDeleted.level[0].forward = nil
 }
 
+// 更新节点
 func (sl *Skiplist) UpdateScore(curScore float64, elem string, newScore float64) *SkipListNode {
 	var (
 		update     [MaxLevel]*SkipListNode
@@ -213,3 +221,4 @@ func (sl *Skiplist) canUpdateScoreFor(node *SkipListNode, newScore float64) bool
 
 	return false
 }
+*/

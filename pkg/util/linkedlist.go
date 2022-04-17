@@ -10,6 +10,7 @@ type Node struct {
 	Next  *Node
 }
 
+// 以当前节点开头，以字符串格式输出这个链表
 func (n *Node) String() string {
 	if n == nil {
 		return ""
@@ -28,12 +29,15 @@ func (n *Node) String() string {
 	}
 }
 
+// 新建节点
 func NewNode(value float64) *Node {
 	return &Node{
 		Value: value,
 	}
+	
 }
 
+// 新建一个有指定next节点的节点
 func NewNodeWithNext(value float64, next *Node) *Node {
 	return &Node{
 		Value: value,
@@ -41,6 +45,7 @@ func NewNodeWithNext(value float64, next *Node) *Node {
 	}
 }
 
+// 遍历链表
 func Traverse(head *Node) *Node {
 	var pre, current *Node = nil, head
 	for {
@@ -51,7 +56,7 @@ func Traverse(head *Node) *Node {
 	}
 }
 
-
+// 遍历链表2 
 func Traverse2(head *Node) *Node {
 	if head == nil || head.Next == nil {
 		return head
@@ -73,7 +78,6 @@ func Traverse2(head *Node) *Node {
 
 
 // 检测链表是否有环（快慢指针）
-
 func HasCircle(head *Node) bool {
 	if head == nil {
 		return false
@@ -145,6 +149,7 @@ func RDelNode(head *Node, n int) *Node {
 	return nil
 }
 
+// 链表合并,head1在前head2在后
 func Merge(head1, head2 *Node) *Node {
 	if head1 == nil {
 		return head2
@@ -157,8 +162,6 @@ func Merge(head1, head2 *Node) *Node {
 	head, insert := head1, head2
 	if head2.Value < head1.Value {
 
-		
-		
 		head, insert = head2, head1
 
 	}
@@ -193,22 +196,25 @@ func Merge(head1, head2 *Node) *Node {
 	}
 }
 
+// 当前链表可使用的最小容量
 type LeastRecentlyUsed struct {
 	Capacity uint64 // 容量
 	Number   uint64 // 当前链表数量
 	Head     *Node  // 链表头节点
-	mu       sync.RWMutex
+	mu       sync.RWMutex // 读写锁
 }
 
+// 新建一个LeastRecentlyUsed结构体，capacity为链表的容量
 func NewLeastRecentlyUsed(capacity uint64) *LeastRecentlyUsed {
 	return &LeastRecentlyUsed{
 		Capacity: capacity,
 	}
 }
 
-// 返回要查找的结点的前一个节点跟自己的节点，如果pre为空则要查找的结点就是头结点
+// 返回要查找的结点的前一个节点跟自己的节点，如果pre为空则要查找的结点就是头结点，并判断是否存在
 func (l *LeastRecentlyUsed) Find(value interface{}) (pre, cur *Node, exist bool) {
 	l.mu.RLock()
+	// 方法结束之后释放读写锁
 	defer l.mu.RUnlock()
 
 	if l.Head == nil {
@@ -236,6 +242,7 @@ func (l *LeastRecentlyUsed) Find(value interface{}) (pre, cur *Node, exist bool)
 	}
 }
 
+//值为value的节点插入链表
 func (l *LeastRecentlyUsed) Use(value float64) {
 	pre, cur, ok := l.Find(value)
 	l.mu.Lock()
@@ -267,7 +274,6 @@ func (l *LeastRecentlyUsed) Use(value float64) {
 			l.mu.Unlock()
 			return
 		}
-
 	} else {
 		l.Number++
 		newNode := NewNodeWithNext(value, l.Head)
