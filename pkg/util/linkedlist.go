@@ -242,7 +242,7 @@ func (l *LeastRecentlyUsed) Find(value interface{}) (pre, cur *Node, exist bool)
 	}
 }
 
-//值为value的节点插入链表
+// 值为value的节点插入链表
 func (l *LeastRecentlyUsed) Use(value float64) {
 	pre, cur, ok := l.Find(value)
 	l.mu.Lock()
