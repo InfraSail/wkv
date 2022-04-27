@@ -122,7 +122,7 @@ func TestSkipListLastInRangeFunc(t *testing.T) {
 		   } 
 }
 
-/*
+
 func TestSkipListDeleteRangeByScoreFunc(t *testing.T) {
 	sl := skipListNew()
 	
@@ -133,4 +133,4 @@ func TestSkipListDeleteRangeByScoreFunc(t *testing.T) {
 		 t.Errorf("expected be OK, but %d got", ans)
 
 		}   
-}*/
+}
