@@ -1,9 +1,9 @@
 package util
 
-//import "time"
+import "time"
 
 //输入的时间是否以秒为单位
-/*
+
 const (
 	UNIT_SECONDS = 0
 	UNIT_MILLISECONDS = 1
@@ -16,8 +16,8 @@ type redisDB struct{
 }
 
 // 设置key过期时间命令,basetime为当前时间，unit为传入过期时间
-/*
-func expireGenericCommand(baseTime int, unit int, db *redisDB)  {
+
+func expireGenericCommand(baseTime int, unit int, db *redisDB)   {
 	var k interface{} = "aaa"
 	//when应该是用户传入吧？？
 	when := 1234
@@ -40,14 +40,12 @@ func expireGenericCommand(baseTime int, unit int, db *redisDB)  {
        //进入这个函数的条件：when 提供的时间已经过期，未载入数据且服务器为主节点（注意主服务器的masterhost==NULL）}
 
 //设置expire
-/*
 func setExpire(db *redisDB, key interface{},when int) {
 	idx, ent:= db.dict.keyIndex(key)
 
-}*/
+}
 
 // 找key，如果不存在，就返回nil
-/*
 func lookUpKeyWrite(key interface{},db *redisDB) (idx uint64, existed *entry){
 	 idx, ent:= db.dict.keyIndex(key)
 	if(ent == nil){
@@ -56,7 +54,6 @@ func lookUpKeyWrite(key interface{},db *redisDB) (idx uint64, existed *entry){
 	return idx, ent
 
 }
-/*
 func expireCommand() {
 	
 	expireGenericCommand(mstime(), UNIT_SECONDS, &redisDB{})
@@ -71,9 +68,8 @@ func pexpireCommand() {
 func pexpireatCommand() {
 	expireGenericCommand(0, UNIT_MILLISECONDS, &redisDB{})
 }
-*/
+
 //返回UNIT当前时间
-/*
 func mstime() int {
 	return time.Now().Nanosecond()
-}*/
+}

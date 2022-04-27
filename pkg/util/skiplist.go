@@ -209,7 +209,7 @@ func (sl *SkipList) skipListDelete(score float64) *Element {
 }
 
 // 给定一个分值范围，删除跳跃表中所有在这个范围内的节点
-/*
+
 func (sl *SkipList) skipListDeleteRangeByScore(left float64, right float64) int{
 	num := 0
 	//const s *Element = sl.skipListFirstInRange(left,right) 
@@ -225,4 +225,4 @@ func (sl *SkipList) skipListDeleteRangeByScore(left float64, right float64) int{
 	}
 	return num
 }
-*/
+

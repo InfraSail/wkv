@@ -39,7 +39,7 @@ func NewDict() *Dict {
 		// 初始化的时候，准备两张哈希表，默认使用哈希表 1
 		// 在进行扩容时，会将哈希表 1 中的所有元素迁移到
 		// 哈希表 2。
-		hashTables: []*hashTable{{}, {}},
+		hashTables: []*hashTable{{}, {},},
 		rehashIdx:  -1,
 		iterators:  0,
 	}
@@ -243,11 +243,15 @@ func (d *Dict) loadOrStore(key, value interface{}) (ent *entry, loaded bool) {
 // keyIndex 基于指定的 key 获得对应的 bucket 索引
 // 如果 key 已经存在于字典中，则直接返回关联的 entry
 func (d *Dict)  keyIndex(key interface{}) (idx uint64, existed *entry) {
-	bytesBuffer := bytes.NewBuffer([]byte{})
-	err := binary.Write(bytesBuffer, binary.BigEndian, key)
-	if err != nil{
+	bytesBuffer := new(bytes.Buffer)
+	err := binary.Write(bytesBuffer, binary.LittleEndian, key)
+	fmt.Println(len(bytesBuffer.Bytes()))
+
+
+	if err == nil{
 		return 
 	}
+
 	hash := siphash.New(bytesBuffer.Bytes())
 	
 	for i := 0; i < 2; i++ {
