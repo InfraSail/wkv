@@ -16,7 +16,7 @@ func TestLoadFunc(t *testing.T) {
 	d.Store("aaa","bbb")
 	d.Store("aaa",33)
 
-	if v, exi := d.Load("aaa"); v != nil || exi != false {
+	if v, exi := d.Load(sdsNew("aaa")); v != nil || exi != false {
 		t.Errorf("expected be OK, but %s got", v)
 		t.Errorf("expected be OK, but %v got", exi)
 
@@ -45,17 +45,17 @@ func TestRehashingFunc(t *testing.T) {
 
 func TestLoadOrStoreFunc(t *testing.T) {
 	d := NewDict()
-	a := "aaa"
-	d.loadOrStore(a,"bbb")
-	d.loadOrStore(a,"bbb")
-	d.loadOrStore(a,"bbb")
+	
+	d.loadOrStore(sdsNew("aaa"),"bbb")
+	d.loadOrStore(sdsNew("aaa"),"bbb")
+	d.loadOrStore(sdsNew("aaa"),"bbb")
 
-	if ent, loaded := d.loadOrStore(a,"bbb"); ent != nil || loaded != false {
+	if ent, loaded := d.loadOrStore(sdsNew("aaa"),"bbb"); ent != nil || loaded != false {
 		t.Errorf("expected be OK, but %v got", ent)
 		t.Errorf("expected be OK, but %v got", loaded)
 		
 	}
-	if ent, loaded := d.loadOrStore(a,"bbb"); ent != nil || loaded != false {
+	if ent, loaded := d.loadOrStore(sdsNew("aaa"),"bbb"); ent != nil || loaded != false {
 		t.Errorf("expected be OK, but %v got", ent)
 		t.Errorf("expected be OK, but %v got", loaded)
 		
@@ -65,12 +65,12 @@ func TestLoadOrStoreFunc(t *testing.T) {
 func TestKeyIndexFunc(t *testing.T) {
 	d := NewDict()
 	d.Store("aaa","val")
-	if idx, exi := d.keyIndex("aaa"); idx != 0 || exi != nil {
+	if idx, exi := d.keyIndex(sdsNew("aaa")); idx != 0 || exi != nil {
 		t.Errorf("expected be OK, but %d got", idx)
 		t.Errorf("expected be OK, but %v got", exi)
 		
 	}
-	if idx, exi := d.keyIndex("aaa"); idx != 0 || exi != nil {
+	if idx, exi := d.keyIndex(sdsNew("aaa")); idx != 0 || exi != nil {
 		t.Errorf("expected be OK, but %d got", idx)
 		t.Errorf("expected be OK, but %v got", exi)
 		

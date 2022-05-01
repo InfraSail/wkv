@@ -29,7 +29,8 @@ type hashTable struct {
 }
 
 type entry struct {
-	key, value interface{}
+	key sdshdr
+	value interface{}
 	next       *entry
 }
 
@@ -50,15 +51,16 @@ func (d *Dict) String() string {
 }
 
 // Store 向字典中添加 key-value。
-func (d *Dict) Store(key interface{}, value interface{}) {
-	ent, loaded := d.loadOrStore(key, value)
+func (d *Dict) Store(key string, value interface{}) {
+	sdsKey := sdsNew(key)
+	ent, loaded := d.loadOrStore(sdsKey, value)
 	if loaded {
 		ent.value = value // 直接更新 value 即可
 	} // 否则，上述函数调用会自动添加 (key, value) 到字典中
 }
 
 // Load 从字典中加载指定的 key 对应的值。
-func (d *Dict) Load(key interface{}) (value interface{}, ok bool) {
+func (d *Dict) Load(key *sdshdr) (value interface{}, ok bool) {
 	if d.isRehashing() {
 		d.rehashStep()
 	}
@@ -75,7 +77,7 @@ func (d *Dict) Load(key interface{}) (value interface{}, ok bool) {
 // 否则，该函数会将给定的值添加的字典中，并将给定的默认值返回。
 // 如果能够在字典中成功查找的给定的 key，则 loaded 返回 true，
 // 否则返回 false。
-func (d *Dict) LoadOrStore(key, value interface{}) (actual interface{}, loaded bool) {
+func (d *Dict) LoadOrStore(key *sdshdr, value interface{}) (actual interface{}, loaded bool) {
 	ent, loaded := d.loadOrStore(key, value)
 	if loaded {
 		return ent.value, true
@@ -89,7 +91,7 @@ func (d *Dict) LoadOrStore(key, value interface{}) (actual interface{}, loaded b
 // 实现描述：
 // 1. 遍历哈希表，定位到对应的 buckets
 // 2. 删除 buckets 中匹配的 entry。
-func (d *Dict) Delete(key interface{}) {
+func (d *Dict) Delete(key *sdshdr) {
 	if d.Len() == 0 {
 		// 不要做无畏的挣扎！
 		return
@@ -116,7 +118,7 @@ func (d *Dict) Delete(key interface{}) {
 
 		var prevEntry *entry
 		for ent := ht.buckets[idx]; ent != nil; ent = ent.next {
-			if ent.key == key {
+			if string(ent.key.buf) == string(key.buf) {
 				// 此时需要释放 ent 节点
 				if prevEntry != nil {
 					prevEntry.next = ent.next
@@ -212,7 +214,7 @@ func (d *Dict) RehashForAWhile(duration time.Duration) int64 {
 
 // loadOrStore 先尝试使用 key 查找，如果查找到则直接返回对应 entry，
 // 否则，会添加新的 entry 到字典中，同时返回 nil，表示之前不存在。
-func (d *Dict) loadOrStore(key, value interface{}) (ent *entry, loaded bool) {
+func (d *Dict) loadOrStore(key *sdshdr, value interface{}) (ent *entry, loaded bool) {
 	if d.isRehashing() {
 		d.rehashStep()
 		
@@ -232,7 +234,7 @@ func (d *Dict) loadOrStore(key, value interface{}) (ent *entry, loaded bool) {
 		// 否则，需要在指定 bucket 添加新的 entry
 		// 对于哈希冲突的情况，采用链地址法，在插入新的 entry 时，
 		// 采用头插法，保证最近添加的在最前面
-		entry := &entry{key: key, value: value, next: ht.buckets[idx]}
+		entry := &entry{key: *key, value: value, next: ht.buckets[idx]}
 		ht.buckets[idx] = entry
 		ht.used++
 	}
@@ -242,7 +244,7 @@ func (d *Dict) loadOrStore(key, value interface{}) (ent *entry, loaded bool) {
 
 // keyIndex 基于指定的 key 获得对应的 bucket 索引
 // 如果 key 已经存在于字典中，则直接返回关联的 entry
-func (d *Dict)  keyIndex(key interface{}) (idx uint64, existed *entry) {
+func (d *Dict)  keyIndex(key *sdshdr) (idx uint64, existed *entry) {
 	bytesBuffer := new(bytes.Buffer)
 	err := binary.Write(bytesBuffer, binary.LittleEndian, key)
 	fmt.Println(len(bytesBuffer.Bytes()))
@@ -258,7 +260,7 @@ func (d *Dict)  keyIndex(key interface{}) (idx uint64, existed *entry) {
 		ht := d.hashTables[i]
 		idx = ht.sizemask & hash.Sum64() //?
 		for ent := ht.buckets[idx]; ent != nil; ent = ent.next {
-			if ent.key == key {
+			if string(ent.key.buf) == string(key.buf) {
 				return idx, ent
 			}
 		}
