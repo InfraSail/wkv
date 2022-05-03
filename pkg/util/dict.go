@@ -245,20 +245,12 @@ func (d *Dict) loadOrStore(key *sdshdr, value interface{}) (ent *entry, loaded b
 // keyIndex 基于指定的 key 获得对应的 bucket 索引
 // 如果 key 已经存在于字典中，则直接返回关联的 entry
 func (d *Dict)  keyIndex(key *sdshdr) (idx uint64, existed *entry) {
-	bytesBuffer := new(bytes.Buffer)
-	err := binary.Write(bytesBuffer, binary.LittleEndian, key)
-	fmt.Println(len(bytesBuffer.Bytes()))
-
-
-	if err == nil{
-		return 
-	}
-
-	hash := siphash.New(bytesBuffer.Bytes())
+	//only hash the key.buf
+	hash := siphash.New(key.buf).Sum64()
 	
 	for i := 0; i < 2; i++ {
 		ht := d.hashTables[i]
-		idx = ht.sizemask & hash.Sum64() //?
+		idx = ht.sizemask & hash //?
 		for ent := ht.buckets[idx]; ent != nil; ent = ent.next {
 			if string(ent.key.buf) == string(key.buf) {
 				return idx, ent
