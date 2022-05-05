@@ -1,6 +1,9 @@
 package util
 
-import "time"
+import (
+	"time"
+	"wkv/pkg/util"
+)
 
 //输入的时间是否以秒为单位
 
@@ -10,15 +13,15 @@ const (
 )
 
 type redisDB struct{
-	dict *Dict //数据库键空间，存放着所有的键值对
-	expires *Dict //键的过期时间
+	dict *util.Dict //数据库键空间，存放着所有的键值对
+	expires *util.Dict //键的过期时间
 
 }
 
 // 设置key过期时间命令,basetime为当前时间，unit为传入过期时间
 
 func expireGenericCommand(baseTime int, unit int, db *redisDB)   {
-	var k interface{} = "aaa"
+	var k *util.Sdshdr = util.SdsNew("feefds")
 	//when应该是用户传入吧？？
 	when := 1234
 	//如果传入的过期时间是以秒为单位的，那么将它转换为毫秒
@@ -37,17 +40,19 @@ func expireGenericCommand(baseTime int, unit int, db *redisDB)   {
       * 即使 EXPIRE 的 TTL 为负数，或者 EXPIREAT 提供的时间戳已经过期，
       * 服务器也不会主动删除这个键，而是等待主节点发来显式的 DEL 命令。
      */
-       //进入这个函数的条件：when 提供的时间已经过期，未载入数据且服务器为主节点（注意主服务器的masterhost==NULL）}
+       //进入这个函数的条件：when 提供的时间已经过期，未载入数据且服务器为主节点（注意主服务器的masterhost==NULL）
+	}
 
 //设置expire
-func setExpire(db *redisDB, key interface{},when int) {
-	idx, ent:= db.dict.keyIndex(key)
+
+func setExpire(db *redisDB, key *util.Sdshdr,when int) {
+	idx, ent:= db.dict.KeyIndex(key)
 
 }
 
 // 找key，如果不存在，就返回nil
-func lookUpKeyWrite(key interface{},db *redisDB) (idx uint64, existed *entry){
-	 idx, ent:= db.dict.keyIndex(key)
+func lookUpKeyWrite(key *util.Sdshdr,db *redisDB) (idx uint64, existed *util.Entry){
+	 idx, ent:= db.dict.KeyIndex(key)
 	if(ent == nil){
 		return 
 	}
