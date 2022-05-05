@@ -16,7 +16,7 @@ var (
 	bu         []byte
 )
 
-type sdshdr struct {
+type Sdshdr struct {
 	// 等于SDS所保存字符串的长度
 
 	len int
@@ -57,14 +57,14 @@ func UserAsk(ask_str string) (err error) {
 
 
 // 创建一个包含给定go字符串的SDS
-func sdsNew(str string) (s *sdshdr) {
-	s = &sdshdr{i, fr, bu}
+func SdsNew(str string) (s *Sdshdr) {
+	s = &Sdshdr{i, fr, bu}
 	sdsCat(s, str)
 
 	return 
 }
 
-func (s *sdshdr) GetString() (str string) {
+func (s *Sdshdr) GetString() (str string) {
 	 str = string(s.buf[:s.len])
 	 return
 	}
@@ -72,13 +72,13 @@ func (s *sdshdr) GetString() (str string) {
 
 // 创建一个不包含任何内容的空 SDS
 
-func sdsEmpty() *sdshdr {
-	s := sdshdr{0, 0, bu}
+func sdsEmpty() *Sdshdr {
+	s := Sdshdr{0, 0, bu}
 	return &s
 }
 
 
-func sdsCatSpace(s *sdshdr, cat_str string) string {
+func sdsCatSpace(s *Sdshdr, cat_str string) string {
 
 	cat_buf := []byte(cat_str)
 	bufLength := len(cat_buf)
@@ -113,19 +113,19 @@ func sdsCatSpace(s *sdshdr, cat_str string) string {
 }
 
 // 返回SDS已使用的字节数
-func sdsLen(s *sdshdr) int {
+func sdsLen(s *Sdshdr) int {
 
 	return s.len
 }
 
 // 返回SDS未使用的字节数
-func sdsAvail(s *sdshdr) int {
+func sdsAvail(s *Sdshdr) int {
 
 	return s.free
 }
 
 // 清空SDS保存的字符串内容
-func sdsClear(s *sdshdr) string {
+func sdsClear(s *Sdshdr) string {
 	s.free = fr
 	s.len = i
 	s.buf = bu
@@ -133,7 +133,7 @@ func sdsClear(s *sdshdr) string {
 }
 
 // 对比两个 SDS 字符串是否相同,-1不同,0相同
-func sdsCmp(s1 *sdshdr, s2 *sdshdr) int {
+func sdsCmp(s1 *Sdshdr, s2 *Sdshdr) int {
 
 	return strings.Compare(string(s1.buf), string(s2.buf))
 }
@@ -141,7 +141,7 @@ func sdsCmp(s1 *sdshdr, s2 *sdshdr) int {
 
 
 // 增长字符串
-func sdsCat(s *sdshdr, cat_str string) string {
+func sdsCat(s *Sdshdr, cat_str string) string {
 	//var cat_buf[] byte	
 	sdsCatSpace(s, cat_str)
 	//sdsAvail(s)
@@ -169,7 +169,7 @@ func removeDuplication_map(arr []byte) []byte {
 // 缩减字符串
 
 
-func sdsTrim(s *sdshdr, trim_str string)  string {
+func sdsTrim(s *Sdshdr, trim_str string)  string {
 	/*strTrim := string(s.buf)
 	trimBuf := []byte(trim_str)
 	newTrimBuf := string(removeDuplication_map(trimBuf))
@@ -220,7 +220,7 @@ func sdsTrim(s *sdshdr, trim_str string)  string {
 // 保留 SDS 给定区间内的数据， 不在区间内的数据会被覆盖或清除。
 
 
-func sdsRange(s *sdshdr, left int, right int) ( err error) {
+func sdsRange(s *Sdshdr, left int, right int) ( err error) {
 	
 	if right < left {
 		err = errors.New("ERROR!")
@@ -246,7 +246,7 @@ func sdsRange(s *sdshdr, left int, right int) ( err error) {
 }
 
 // 指定sds长度
-func sdsGrowZero(s *sdshdr, self_defined_len int) (ret string) {
+func sdsGrowZero(s *Sdshdr, self_defined_len int) (ret string) {
 
 	var tmp_str string
 	for i, iter_num := 0, self_defined_len-s.len; i < iter_num; i++ {
@@ -258,7 +258,7 @@ func sdsGrowZero(s *sdshdr, self_defined_len int) (ret string) {
 }
 
 //对给定的字符串按给定的sep 分隔符来切割
-func sdsSeplitLen(s *sdshdr, sep string ) []string{
+func sdsSeplitLen(s *Sdshdr, sep string ) []string{
 	newSep := removeDuplication_map([]byte(sep))
 	for _, sep_value := range newSep {
 		for j, s_value := range s.buf {
@@ -273,15 +273,15 @@ func sdsSeplitLen(s *sdshdr, sep string ) []string{
 
 // 释放给定的sds
 /*
-func sdsFree(s *sdshdr) *sdshdr{
+func sdsFree(s *Sdshdr) *Sdshdr{
 	
-	s = &sdshdr{1,1,[]byte{'a'}}
+	s = &Sdshdr{1,1,[]byte{'a'}}
 	return s
 }*/
 
 // 返回一个新的sds，内容与给定的s 相同。
-func sdsDup(s *sdshdr) *sdshdr{
-	newSds := sdsNew(s.GetString())
+func sdsDup(s *Sdshdr) *Sdshdr{
+	newSds := SdsNew(s.GetString())
 	
 	return newSds
 }

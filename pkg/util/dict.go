@@ -12,26 +12,26 @@ import (
 
 // 初始化哈希表的容量
 const (
-	_initialHashtableSize uint64 = 4
+	_initialHashTableSize uint64 = 4
 )
 
 type Dict struct {
-	hashTables []*hashTable
+	HashTables []*HashTable
 	rehashIdx  int64 // 是否进行重哈希的标记量
 	iterators  uint64 
 }
 
-type hashTable struct {
-	buckets  []*entry
+type HashTable struct {
+	buckets  []*Entry
 	size     uint64
 	sizemask uint64 
 	used     uint64 
 }
 
-type entry struct {
-	key sdshdr
+type Entry struct {
+	key Sdshdr
 	value interface{}
-	next       *entry
+	next       *Entry
 }
 
 // New 实例化一个字典。
@@ -40,7 +40,7 @@ func NewDict() *Dict {
 		// 初始化的时候，准备两张哈希表，默认使用哈希表 1
 		// 在进行扩容时，会将哈希表 1 中的所有元素迁移到
 		// 哈希表 2。
-		hashTables: []*hashTable{{}, {},},
+		HashTables: []*HashTable{{}, {},},
 		rehashIdx:  -1,
 		iterators:  0,
 	}
@@ -52,7 +52,7 @@ func (d *Dict) String() string {
 
 // Store 向字典中添加 key-value。
 func (d *Dict) Store(key string, value interface{}) {
-	sdsKey := sdsNew(key)
+	sdsKey := SdsNew(key)
 	ent, loaded := d.loadOrStore(sdsKey, value)
 	if loaded {
 		ent.value = value // 直接更新 value 即可
@@ -60,12 +60,12 @@ func (d *Dict) Store(key string, value interface{}) {
 }
 
 // Load 从字典中加载指定的 key 对应的值。
-func (d *Dict) Load(key *sdshdr) (value interface{}, ok bool) {
+func (d *Dict) Load(key *Sdshdr) (value interface{}, ok bool) {
 	if d.isRehashing() {
 		d.rehashStep()
 	}
 
-	_, existed := d.keyIndex(key)
+	_, existed := d.KeyIndex(key)
 	if existed != nil {
 		return existed.value, true
 	}
@@ -77,7 +77,7 @@ func (d *Dict) Load(key *sdshdr) (value interface{}, ok bool) {
 // 否则，该函数会将给定的值添加的字典中，并将给定的默认值返回。
 // 如果能够在字典中成功查找的给定的 key，则 loaded 返回 true，
 // 否则返回 false。
-func (d *Dict) LoadOrStore(key *sdshdr, value interface{}) (actual interface{}, loaded bool) {
+func (d *Dict) LoadOrStore(key *Sdshdr, value interface{}) (actual interface{}, loaded bool) {
 	ent, loaded := d.loadOrStore(key, value)
 	if loaded {
 		return ent.value, true
@@ -90,8 +90,8 @@ func (d *Dict) LoadOrStore(key *sdshdr, value interface{}) (actual interface{}, 
 // 不做。
 // 实现描述：
 // 1. 遍历哈希表，定位到对应的 buckets
-// 2. 删除 buckets 中匹配的 entry。
-func (d *Dict) Delete(key *sdshdr) {
+// 2. 删除 buckets 中匹配的 Entry。
+func (d *Dict) Delete(key *Sdshdr) {
 	if d.Len() == 0 {
 		// 不要做无畏的挣扎！
 		return
@@ -109,14 +109,14 @@ func (d *Dict) Delete(key *sdshdr) {
 	hash := siphash.New(bytesBuffer.Bytes())
 
 	for i := 0; i < 2; i++ {
-		ht := d.hashTables[i]
+		ht := d.HashTables[i]
 		err := binary.Write(bytesBuffer, binary.BigEndian, ht.sizemask)
 		if err != nil {
 			return
 		}
 		idx := ht.sizemask & hash.Sum64()
 
-		var prevEntry *entry
+		var prevEntry *Entry
 		for ent := ht.buckets[idx]; ent != nil; ent = ent.next {
 			if string(ent.key.buf) == string(key.buf) {
 				// 此时需要释放 ent 节点
@@ -145,7 +145,7 @@ func (d *Dict) Delete(key *sdshdr) {
 // Len 返回字典中元素的个数
 func (d *Dict) Len() uint64 {
 	var _len uint64
-	for _, ht := range d.hashTables {
+	for _, ht := range d.HashTables {
 		_len += ht.used
 	}
 	return _len
@@ -154,9 +154,9 @@ func (d *Dict) Len() uint64 {
 // Cap 返回字典的容量
 func (d *Dict) Cap() uint64 {
 	if d.isRehashing() {
-		return d.hashTables[1].size
+		return d.HashTables[1].size
 	}
-	return d.hashTables[0].size
+	return d.HashTables[0].size
 }
 
 // TODO :
@@ -186,9 +186,9 @@ func (d *Dict) Resize() error {
 		return errors.New("dict is rehashing")
 	}
 
-	size := d.hashTables[0].used
-	if size < _initialHashtableSize {
-		size = _initialHashtableSize
+	size := d.HashTables[0].used
+	if size < _initialHashTableSize {
+		size = _initialHashTableSize
 	}
 	return d.resizeTo(size)
 }
@@ -212,44 +212,44 @@ func (d *Dict) RehashForAWhile(duration time.Duration) int64 {
 	}
 }
 
-// loadOrStore 先尝试使用 key 查找，如果查找到则直接返回对应 entry，
-// 否则，会添加新的 entry 到字典中，同时返回 nil，表示之前不存在。
-func (d *Dict) loadOrStore(key *sdshdr, value interface{}) (ent *entry, loaded bool) {
+// loadOrStore 先尝试使用 key 查找，如果查找到则直接返回对应 Entry，
+// 否则，会添加新的 Entry 到字典中，同时返回 nil，表示之前不存在。
+func (d *Dict) loadOrStore(key *Sdshdr, value interface{}) (ent *Entry, loaded bool) {
 	if d.isRehashing() {
 		d.rehashStep()
 		
 	}
 
 	_ = d.expandIfNeeded() // 这里简单起见，假设一定是可以扩容成功的，忽略了错误
-	idx, existed := d.keyIndex(key)
+	idx, existed := d.KeyIndex(key)
 
-	ht := d.hashTables[0]
+	ht := d.HashTables[0]
 	if d.isRehashing() {
-		ht = d.hashTables[1]
+		ht = d.HashTables[1]
 	}
 
 	if existed != nil {
 		return existed, true
 	} else {
-		// 否则，需要在指定 bucket 添加新的 entry
-		// 对于哈希冲突的情况，采用链地址法，在插入新的 entry 时，
+		// 否则，需要在指定 bucket 添加新的 Entry
+		// 对于哈希冲突的情况，采用链地址法，在插入新的 Entry 时，
 		// 采用头插法，保证最近添加的在最前面
-		entry := &entry{key: *key, value: value, next: ht.buckets[idx]}
-		ht.buckets[idx] = entry
+		Entry := &Entry{key: *key, value: value, next: ht.buckets[idx]}
+		ht.buckets[idx] = Entry
 		ht.used++
 	}
 
 	return nil, false
 }
 
-// keyIndex 基于指定的 key 获得对应的 bucket 索引
-// 如果 key 已经存在于字典中，则直接返回关联的 entry
-func (d *Dict)  keyIndex(key *sdshdr) (idx uint64, existed *entry) {
+// KeyIndex 基于指定的 key 获得对应的 bucket 索引
+// 如果 key 已经存在于字典中，则直接返回关联的 Entry
+func (d *Dict)  KeyIndex(key *Sdshdr) (idx uint64, existed *Entry) {
 	//only hash the key.buf
-	hash := siphash.New(key.buf).Sum64()
+	hash := SipHash(string(key.buf))
 	
 	for i := 0; i < 2; i++ {
-		ht := d.hashTables[i]
+		ht := d.HashTables[i]
 		idx = ht.sizemask & hash //?
 		for ent := ht.buckets[idx]; ent != nil; ent = ent.next {
 			if string(ent.key.buf) == string(key.buf) {
@@ -273,15 +273,15 @@ func (d *Dict) expandIfNeeded() error {
 		return nil
 	}
 
-	if d.hashTables[0].size == 0 {
+	if d.HashTables[0].size == 0 {
 		// 第一次扩容，需要一定的空间存放新的 keys
-		return d.resizeTo(_initialHashtableSize)
+		return d.resizeTo(_initialHashTableSize)
 	}
 
 	// 否则，根据负载因子判断是否需要进行扩容
 	// 扩容策略简单粗暴，至少要是已有元素个数的二倍
-	if d.hashTables[0].used == d.hashTables[0].size {
-		return d.resizeTo(d.hashTables[0].used * 2)
+	if d.HashTables[0].used == d.HashTables[0].size {
+		return d.resizeTo(d.HashTables[0].used * 2)
 	}
 
 	return nil
@@ -289,28 +289,28 @@ func (d *Dict) expandIfNeeded() error {
 
 func (d *Dict) resizeTo(size uint64) error {
 	// 这里主要是要保证扩容大小符合要求，至少要比现有元素个数多
-	if d.isRehashing() || d.hashTables[0].used > size {
+	if d.isRehashing() || d.HashTables[0].used > size {
 		return errors.New("failed to resize")
 	}
 
 	size = d.nextPower(size)
-	if size == d.hashTables[0].size {
+	if size == d.HashTables[0].size {
 		return nil
 	}
 
 	// 准备开始扩容
-	var ht *hashTable
-	if d.hashTables[0].size == 0 {
+	var ht *HashTable
+	if d.HashTables[0].size == 0 {
 		// 第一次执行扩容，给 ht[0] 准备好，接下来 keys 可以直接放进来
-		ht = d.hashTables[0]
+		ht = d.HashTables[0]
 	} else {
-		ht = d.hashTables[1]
+		ht = d.HashTables[1]
 		// 表明需要开始进一步扩容，迁移 ht[0] -> ht[1]
 		d.rehashIdx = 0
 	}
 	ht.size = size
 	ht.sizemask = size - 1
-	ht.buckets = make([]*entry, ht.size)
+	ht.buckets = make([]*Entry, ht.size)
 	return nil
 }
 
@@ -321,7 +321,7 @@ func (d *Dict) nextPower(size uint64) uint64 {
 		return math.MaxUint64
 	}
 
-	i := _initialHashtableSize
+	i := _initialHashTableSize
 	for i < size {
 		i <<= 1 // i*= 2
 	}
@@ -346,7 +346,7 @@ func (d *Dict) rehash(steps uint64) (finished bool) {
 
 	maxEmptyBucketsMeets := 10 * steps
 
-	src, dst := d.hashTables[0], d.hashTables[1]
+	src, dst := d.HashTables[0], d.HashTables[1]
 	//如果连续遇到10 * steps个空buckets
 	for ; steps > 0 && src.used != 0; steps-- {
 		// 扫描哈希表直到遇到非空的 bucket
@@ -358,7 +358,7 @@ func (d *Dict) rehash(steps uint64) (finished bool) {
 			}
 		}
 
-		// 把整个 bucket 上所有的 entry 都迁移走
+		// 把整个 bucket 上所有的 Entry 都迁移走
 		for ent := src.buckets[d.rehashIdx]; ent != nil; {
 			next := ent.next
 			bytesBuffer := bytes.NewBuffer([]byte{})
@@ -383,8 +383,8 @@ func (d *Dict) rehash(steps uint64) (finished bool) {
 
 	// 如果迁移完毕，需要将 ht[0] 指向迁移后的哈希表
 	if src.used == 0 {
-		d.hashTables[0] = dst
-		d.hashTables[1] = &hashTable{}
+		d.HashTables[0] = dst
+		d.HashTables[1] = &HashTable{}
 		d.rehashIdx = -1
 		return true
 	}
