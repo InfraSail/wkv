@@ -34,7 +34,7 @@ func NewNode(value float64) *Node {
 	return &Node{
 		Value: value,
 	}
-	
+
 }
 
 // 新建一个有指定next节点的节点
@@ -56,7 +56,7 @@ func Traverse(head *Node) *Node {
 	}
 }
 
-// 遍历链表2 
+// 遍历链表2
 func Traverse2(head *Node) *Node {
 	if head == nil || head.Next == nil {
 		return head
@@ -75,7 +75,6 @@ func Traverse2(head *Node) *Node {
 		cur = a
 	}
 }
-
 
 // 检测链表是否有环（快慢指针）
 func HasCircle(head *Node) bool {
@@ -198,9 +197,9 @@ func Merge(head1, head2 *Node) *Node {
 
 // 当前链表可使用的最小容量
 type LeastRecentlyUsed struct {
-	Capacity uint64 // 容量
-	Number   uint64 // 当前链表数量
-	Head     *Node  // 链表头节点
+	Capacity uint64       // 容量
+	Number   uint64       // 当前链表数量
+	Head     *Node        // 链表头节点
 	mu       sync.RWMutex // 读写锁
 }
 
