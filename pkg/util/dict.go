@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"time"
+
 	"github.com/dchest/siphash"
 )
 
@@ -18,20 +19,20 @@ const (
 type Dict struct {
 	HashTables []*HashTable
 	rehashIdx  int64 // 是否进行重哈希的标记量
-	iterators  uint64 
+	iterators  uint64
 }
 
 type HashTable struct {
 	buckets  []*Entry
 	size     uint64
-	sizemask uint64 
-	used     uint64 
+	sizemask uint64
+	used     uint64
 }
 
 type Entry struct {
-	key Sdshdr
+	key   Sdshdr
 	value interface{}
-	next       *Entry
+	next  *Entry
 }
 
 // New 实例化一个字典。
@@ -40,7 +41,7 @@ func NewDict() *Dict {
 		// 初始化的时候，准备两张哈希表，默认使用哈希表 1
 		// 在进行扩容时，会将哈希表 1 中的所有元素迁移到
 		// 哈希表 2。
-		HashTables: []*HashTable{{}, {},},
+		HashTables: []*HashTable{{}, {}},
 		rehashIdx:  -1,
 		iterators:  0,
 	}
@@ -217,7 +218,7 @@ func (d *Dict) RehashForAWhile(duration time.Duration) int64 {
 func (d *Dict) loadOrStore(key *Sdshdr, value interface{}) (ent *Entry, loaded bool) {
 	if d.isRehashing() {
 		d.rehashStep()
-		
+
 	}
 
 	_ = d.expandIfNeeded() // 这里简单起见，假设一定是可以扩容成功的，忽略了错误
@@ -244,10 +245,10 @@ func (d *Dict) loadOrStore(key *Sdshdr, value interface{}) (ent *Entry, loaded b
 
 // KeyIndex 基于指定的 key 获得对应的 bucket 索引
 // 如果 key 已经存在于字典中，则直接返回关联的 Entry
-func (d *Dict)  KeyIndex(key *Sdshdr) (idx uint64, existed *Entry) {
+func (d *Dict) KeyIndex(key *Sdshdr) (idx uint64, existed *Entry) {
 	//only hash the key.buf
 	hash := SipHash(string(key.buf))
-	
+
 	for i := 0; i < 2; i++ {
 		ht := d.HashTables[i]
 		idx = ht.sizemask & hash //?
@@ -266,6 +267,7 @@ func (d *Dict)  KeyIndex(key *Sdshdr) (idx uint64, existed *Entry) {
 	// 第二个哈希表，从而保证依赖该接口的地方存储的新键一定进入到新的哈希表
 	return idx, nil
 }
+
 //扩容
 func (d *Dict) expandIfNeeded() error {
 	if d.isRehashing() {
@@ -363,10 +365,10 @@ func (d *Dict) rehash(steps uint64) (finished bool) {
 			next := ent.next
 			bytesBuffer := bytes.NewBuffer([]byte{})
 			err := binary.Write(bytesBuffer, binary.BigEndian, ent.key)
-			if err != nil{
-				return 
+			if err != nil {
+				return
 			}
-			
+
 			idx := siphash.New(bytesBuffer.Bytes()).Sum64() & dst.sizemask
 			ent.next = dst.buckets[idx]
 			dst.buckets[idx] = ent
