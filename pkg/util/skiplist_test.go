@@ -48,9 +48,7 @@ func TestSkipListDeleteFunc(t *testing.T) {
 	sl := skipListNew()
 	
 	sl.skipListInsert(20.5, "O1")	
-	sl.skipListInsert(1, "O2")
-	sl.skipListInsert(30, 38)
-		if ans := sl.skipListDelete(float64(20.5)); ans != nil && ans.Value != "O1"{
+		if ans := sl.skipListDelete(float64(20.5));  ans.Value != "O1"{
 		 t.Errorf("expected be OK, but %v got", ans)
 
 		}   
@@ -127,10 +125,13 @@ func TestSkipListDeleteRangeByScoreFunc(t *testing.T) {
 	sl := skipListNew()
 	
 	sl.skipListInsert(20.5, "O1")	
-	sl.skipListInsert(1, "O2")
-	sl.skipListInsert(30, 38)
-		if ans := sl.skipListDeleteRangeByScore(0,20); ans != 2{
+		if ans := sl.skipListDeleteRangeByScore(0,25); ans != 1{
 		 t.Errorf("expected be OK, but %d got", ans)
 
 		}   
+		if ans := sl.skipListDeleteRangeByScore(0,10); ans != 0{
+			t.Errorf("expected be OK, but %d got", ans)
+   
+		   }   
+
 }
