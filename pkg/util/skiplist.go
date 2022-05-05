@@ -214,15 +214,20 @@ func (sl *SkipList) skipListDeleteRangeByScore(left float64, right float64) int{
 	num := 0
 	//const s *Element = sl.skipListFirstInRange(left,right) 
 	
-	for {
-		s := sl.skipListFirstInRange(left,right)
-		if s.Score == float64(0){
-		break
-		}else{
-		s = sl.skipListDelete(s.Score)
-		num ++
-		}
-	}
+	
+		for{
+            s := sl.skipListFirstInRange(left,right)
+            if s == nil{
+                break
+            }
+            sl.skipListDelete(s.Score)
+            
+	    	num ++
+
+        }
+
+		
+	
 	return num
 }
 
